@@ -3,10 +3,24 @@ import pygame
 import time
 import iuten 
 import threading
+from collections import defaultdict
 c = threading.Condition()
 
 
 pygame.init()
+
+
+##########################**SPRITES**#############################
+
+
+def sprites(peca):
+    n = 0 if peca.islower() else 1
+    image = pygame.image.load(f'images/{peca}{n}.png')
+    return pygame.transform.scale(image, (30,30))
+    
+sprite = defaultdict(lambda: None)
+
+###################################################################
 
 
 tile_width = 30
@@ -74,10 +88,11 @@ class Silly_Thread(threading.Thread):
         global iut     
         self.fun(self.team)
 
-# a = Silly_Thread("IA", 0, sillyAI)
+a = Silly_Thread("IA", 0, sillyAI)
+a.start()
 b = Silly_Thread("IA_2", 1, sillyAI)
-# a.start()
 b.start()
+
 ###############################################################
 
 
@@ -95,8 +110,10 @@ while run:
             pygame.draw.rect(win, color(column+1,row+2), rect)
             peca = iut.table[row+2][column+1]
             if peca != '_':
-                label = myfont.render(peca, 1, fcolor(peca))
-                win.blit(label, (x+8, y-8))
+                imagem = sprite[peca]
+                if sprite[peca] == None:
+                    sprite[peca] = sprites(peca)
+                win.blit(sprite[peca], (x, y))
             y = y + tile_height + margin
         x = x + tile_width + margin
     mouse = pygame.mouse.get_pressed()

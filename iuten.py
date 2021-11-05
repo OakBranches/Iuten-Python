@@ -150,9 +150,6 @@ class Iuten():
             possivel = self.ocupavel((curx, cury),team)
             curPos = self.table[cury][curx]
             
-            
-            #TODO Arrumar ataque especial do arqueiro
-            
             if not possivel or count >= tam:
                 if len(moves) > 0 and shot:
                     if curPos != 'n' and (curPos.isupper() and team == 0 or
