@@ -7,7 +7,7 @@ import threading
 from collections import defaultdict
 
 
-NUM_PLAYERS = 0
+NUM_PLAYERS = 1
 nPartidas = 10
 
 c = threading.Condition()
@@ -66,7 +66,7 @@ attack = []
 run = True
 myfont = pygame.font.SysFont("Comic Sans MS", 30)
 # TEAM = iut.CURPLAYER
-TEAM = 0
+TEAM = 1
 
 
 ##############################################################
@@ -99,9 +99,9 @@ class Silly_Thread(threading.Thread):
 
 a = Silly_Thread("IA", 0, sillyAI, True)
 b = Silly_Thread("IA_2", 1, sillyAI, True)
-if NUM_PLAYERS == 0:
-    a.start()
 if NUM_PLAYERS < 2:
+    a.start()
+if NUM_PLAYERS == 0:
     b.start()
 partidas = [0,0,0]
 ###############################################################
@@ -113,8 +113,7 @@ for i in range(nPartidas):
                 iut.finished = True
                 run = False
                 quit = True
-        if iut.finished:
-            break
+        
 
         x = margin
         for column in range(9):
@@ -131,6 +130,8 @@ for i in range(nPartidas):
                 y = y + tile_height + margin
             x = x + tile_width + margin
         mouse = pygame.mouse.get_pressed()
+        if iut.finished:
+            break
         if mouse[0] and (time.time() - debouncing) > cooldown:
             debouncing = time.time()
             pos = pygame.mouse.get_pos()
@@ -163,7 +164,9 @@ for i in range(nPartidas):
                 TEAM = iut.CURPLAYER
         pygame.display.update()
     run = True
-    partidas[iut.gameover()] += 1
+    ganhador = iut.gameover()
+    time.sleep(1)
+    partidas[ganhador] += 1
     iut.restart()
     if quit:
         break

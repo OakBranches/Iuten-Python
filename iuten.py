@@ -163,7 +163,7 @@ class Iuten():
                 break
             elif possivel and (curPos != '_' or (curx, cury) == self.TORRE1 
                 or (curx, cury) == self.TORRE2):
-                moves.insert(0, (curx, cury))
+                moves.append((curx, cury))
                 if shot:
                     moves = [moves[-1]]
                 break
@@ -309,12 +309,16 @@ class Iuten():
     def gameover(self):
         self.finished = True
         if self.table[self.TRONO1[1]][self.TRONO1[0]] == 'P':
+            print('P chegou no trono')
             return 1
         elif self.table[self.TRONO2[1]][self.TRONO2[0]] == 'p':
+            print('P chegou no trono')
             return 2
         elif sum(list(map(lambda e: e.count('p'), self.table))) == 0:
+            print('todos p morreram')
             return 1
         elif sum(list(map(lambda e: e.count('P'), self.table))) == 0:
+            print('todos P morreram')
             return 2
         self.finished = False
         return 0
@@ -383,36 +387,52 @@ class Iuten():
     def rand(self,b):
         return 0 if 1 == b  else randint(0, b-1)
 
+    def values(self, e):
+        peca = (self.table[e[1]][e[0]]).lower()
+        valores = ['c','p','d','a','e','_']
+        if peca in valores:
+            return valores.index(peca)
+        else:
+            return 10 
+
     def bogoSillyIneffectiveChoice(self, team, teste=False):
         moves = []
         special = []
         escolhido = None
         escolhas = []
         esperto = False
+        trono = self.TRONO1 if team == 1 else self.TRONO2
         for i in range(1,10):
             for j in range(2,13):
                 aux = self.checkMoves((i, j), team)
                 if aux != None:
                     if len(aux[0]) > 0:
+                        aux[0].sort(key=self.values)
                         alvo = self.table[aux[0][0][1]][aux[0][0][0]]
-                        if alvo != '_':
+                        peca = self.table[j][i]
+                        
+                        if peca.lower() == 'p' and trono in aux[0]:
                             esperto = True
-                            moves.insert(0, ((i, j), aux[0], 'm'))
+                            moves.insert(0, ((i, j), [trono], 'm'))
                         else:
-                            moves.append(((i, j), aux[0], 'm'))
+                            if alvo != '_':
+                                esperto = True
+                                moves.insert(0, ((i, j), aux[0], 'm'))
+                            else:
+                                moves.append(((i, j), aux[0], 'm'))
                     if len(aux[1]) > 0:
                         special.append(((i, j), aux[1], 's'))
         
         
-    
         if len(special) > 0:
             escolhas = special[self.rand(len(special))]
-        # elif len(moves) > 0 and esperto:
-        #     escolhas = moves[0]
+        elif len(moves) > 0 and esperto:
+            escolhas = moves[0]
         elif len(moves) > 0:
             escolhas = moves[self.rand(len(moves))]
         else:
             return None
+
         pos = self.table[escolhas[1][0][1]][escolhas[1][0][0]]
         if teste and pos != '_':
             escolhido = ((escolhas[0]), escolhas[1][0], escolhas[2])
