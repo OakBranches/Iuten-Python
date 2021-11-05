@@ -1,12 +1,16 @@
 
+from typing import Text
 import pygame
 import time
 import iuten 
 import threading
 from collections import defaultdict
+
+
+NUM_PLAYERS = 0
+nPartidas = 10
+
 c = threading.Condition()
-
-
 pygame.init()
 
 
@@ -67,84 +71,104 @@ TEAM = 0
 
 ##############################################################
 
-def sillyAI(team):
-    while not iut.finished:
-        time.sleep(0.1)
-        if iut.CURPLAYER == team:
-            move = iut.bogoSillyIneffectiveChoice(team)
-            if move != None:
-                iut.move(move[0],move[1],team, move[2])
-            else:
-                iut.printTable(iut.table)
-                break
+def sillyAI(team, stop, teste = False):
+    
+    if iut.CURPLAYER == team and not iut.finished:
+        move = iut.bogoSillyIneffectiveChoice(team, teste)
+        if move != None:
+            iut.move(move[0],move[1],team, move[2])
 
 class Silly_Thread(threading.Thread):
-    def __init__(self, name, team, fun):
+    def __init__(self, name, team, fun, teste):
         threading.Thread.__init__(self)
         self.name = name
         self.team = team
+        self.teste = teste
         self.fun = fun
+        self.killed = False
+
     def run(self):
         global iut     
-        self.fun(self.team)
+        while not self.killed:
+            self.fun(self.team, self.killed, self.teste)
+        
 
-a = Silly_Thread("IA", 0, sillyAI)
-a.start()
-b = Silly_Thread("IA_2", 1, sillyAI)
-b.start()
+    def kill(self):
+        self.killed = True
 
+
+a = Silly_Thread("IA", 0, sillyAI, True)
+b = Silly_Thread("IA_2", 1, sillyAI, True)
+if NUM_PLAYERS == 0:
+    a.start()
+if NUM_PLAYERS < 2:
+    b.start()
+partidas = [0,0,0]
 ###############################################################
+quit = False
+for i in range(nPartidas):
+    while run:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                iut.finished = True
+                run = False
+                quit = True
+        if iut.finished:
+            break
 
-
-while run:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            iut.finished = True
-            run = False
-
-    x = margin
-    for column in range(9):
-        y = margin
-        for row in range(11):
-            rect = pygame.Rect(x, y, tile_width, tile_height)
-            pygame.draw.rect(win, color(column+1,row+2), rect)
-            peca = iut.table[row+2][column+1]
-            if peca != '_':
-                imagem = sprite[peca]
-                if sprite[peca] == None:
-                    sprite[peca] = sprites(peca)
-                win.blit(sprite[peca], (x, y))
-            y = y + tile_height + margin
-        x = x + tile_width + margin
-    mouse = pygame.mouse.get_pressed()
-    if mouse[0] and (time.time() - debouncing) > cooldown:
-        debouncing = time.time()
-        pos = pygame.mouse.get_pos()
-        curx = pos[0]//(tile_width+margin)
-        cury = pos[1]//(tile_height+margin)
-        if color(curx+1, cury+2) == green and not iut.finished:
-            iut.move(SELECTED, (curx+1, cury+2), TEAM, 'm')
-            moves = []
-        if color(curx+1, cury+2) == yellow and not iut.finished:
-            iut.move(SELECTED, (curx+1, cury+2), TEAM, 's')
-            moves = []
-            attack = []
-        elif not iut.finished:
+        x = margin
+        for column in range(9):
+            y = margin
+            for row in range(11):
+                rect = pygame.Rect(x, y, tile_width, tile_height)
+                pygame.draw.rect(win, color(column+1,row+2), rect)
+                peca = iut.table[row+2][column+1]
+                if peca != '_':
+                    imagem = sprite[peca]
+                    if sprite[peca] == None:
+                        sprite[peca] = sprites(peca)
+                    win.blit(sprite[peca], (x, y))
+                y = y + tile_height + margin
+            x = x + tile_width + margin
+        mouse = pygame.mouse.get_pressed()
+        if mouse[0] and (time.time() - debouncing) > cooldown:
+            debouncing = time.time()
+            pos = pygame.mouse.get_pos()
+            curx = pos[0]//(tile_width+margin)
+            cury = pos[1]//(tile_height+margin)
+            if color(curx+1, cury+2) == green and not iut.finished:
+                iut.move(SELECTED, (curx+1, cury+2), TEAM, 'm')
+                moves = []
+            if color(curx+1, cury+2) == yellow and not iut.finished:
+                iut.move(SELECTED, (curx+1, cury+2), TEAM, 's')
+                moves = []
+                attack = []
+            elif not iut.finished:
+                result = iut.checkMoves((curx+1,cury+2), TEAM)
+                moves = result[0]
+                attack = result[1]
+                SELECTED = (curx+1, cury+2)
+            if NUM_PLAYERS == 2:
+                TEAM = iut.CURPLAYER
+        elif mouse[2] and (time.time() - debouncing) > cooldown:
+            debouncing = time.time()
+            pos = pygame.mouse.get_pos()
+            curx = pos[0]//(tile_width+margin)
+            cury = pos[1]//(tile_height+margin)
             result = iut.checkMoves((curx+1,cury+2), TEAM)
-            moves = result[0]
+            moves = []
             attack = result[1]
             SELECTED = (curx+1, cury+2)
-        # TEAM = iut.CURPLAYER
-    elif mouse[2] and (time.time() - debouncing) > cooldown:
-        debouncing = time.time()
-        pos = pygame.mouse.get_pos()
-        curx = pos[0]//(tile_width+margin)
-        cury = pos[1]//(tile_height+margin)
-        result = iut.checkMoves((curx+1,cury+2), TEAM)
-        attack = result[1]
-        SELECTED = (curx+1, cury+2)
-        # TEAM = iut.CURPLAYER
-    pygame.display.update()
-
+            if NUM_PLAYERS == 2:
+                TEAM = iut.CURPLAYER
+        pygame.display.update()
+    run = True
+    partidas[iut.gameover()] += 1
+    iut.restart()
+    if quit:
+        break
+    
+a.kill()
+b.kill()
+print(partidas)
 pygame.quit()
-

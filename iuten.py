@@ -1,8 +1,11 @@
 from collections import defaultdict
-from random import randint
+from random import randint, shuffle 
 
 class Iuten():
     def __init__(self):
+        self.restart()
+
+    def restart(self):
         self.table = []
 
         self.s = '2p1d1p1_1p1d2p1a1_1e1p1c1p1e1_1aF_F_F_F_3_1A1_1E1P1C1P1E1_1A2P1D1P1_1P1D2P'
@@ -160,7 +163,7 @@ class Iuten():
                 break
             elif possivel and (curPos != '_' or (curx, cury) == self.TORRE1 
                 or (curx, cury) == self.TORRE2):
-                moves.append((curx, cury))
+                moves.insert(0, (curx, cury))
                 if shot:
                     moves = [moves[-1]]
                 break
@@ -380,17 +383,23 @@ class Iuten():
     def rand(self,b):
         return 0 if 1 == b  else randint(0, b-1)
 
-    def bogoSillyIneffectiveChoice(self, team):
+    def bogoSillyIneffectiveChoice(self, team, teste=False):
         moves = []
         special = []
         escolhido = None
         escolhas = []
+        esperto = False
         for i in range(1,10):
             for j in range(2,13):
                 aux = self.checkMoves((i, j), team)
                 if aux != None:
                     if len(aux[0]) > 0:
-                        moves.append(((i, j), aux[0], 'm'))
+                        alvo = self.table[aux[0][0][1]][aux[0][0][0]]
+                        if alvo != '_':
+                            esperto = True
+                            moves.insert(0, ((i, j), aux[0], 'm'))
+                        else:
+                            moves.append(((i, j), aux[0], 'm'))
                     if len(aux[1]) > 0:
                         special.append(((i, j), aux[1], 's'))
         
@@ -398,12 +407,17 @@ class Iuten():
     
         if len(special) > 0:
             escolhas = special[self.rand(len(special))]
+        # elif len(moves) > 0 and esperto:
+        #     escolhas = moves[0]
         elif len(moves) > 0:
             escolhas = moves[self.rand(len(moves))]
         else:
             return None
-
-        escolhido = ((escolhas[0]), escolhas[1][self.rand(len(escolhas[1]))], escolhas[2])
+        pos = self.table[escolhas[1][0][1]][escolhas[1][0][0]]
+        if teste and pos != '_':
+            escolhido = ((escolhas[0]), escolhas[1][0], escolhas[2])
+        else:
+            escolhido = ((escolhas[0]), escolhas[1][self.rand(len(escolhas[1]))], escolhas[2])
         return escolhido
 
 
