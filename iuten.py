@@ -1,6 +1,6 @@
 from collections import defaultdict
 from random import randint, shuffle 
-
+import math
 class Iuten():
     def __init__(self):
         self.restart()
@@ -232,18 +232,45 @@ class Iuten():
             moves.extend(self.raioLaser(p, 8, 1, team))
         return (moves, [])
 
+
+    def separador(self, lista, team):
+        if len(lista) > 3:
+            if self.isMy(lista[-1], abs(team - 1)):
+                return [lista[:-1], [lista[-1]]]
+            else:  
+                return [lista, []]
+        else:
+            return [lista, []]
+        
+    
+
+
     def cavaleiro(self, p, team, bonus = False):
         moves = []
+        special = []
         if bonus:
             return (self.adjacente(p, team), [])
-        moves.extend(self.raioLaser(p, 1, 10, team))
-        moves.extend(self.raioLaser(p, 2, 10, team))
-        moves.extend(self.raioLaser(p, 3, 8, team))
-        moves.extend(self.raioLaser(p, 4, 8, team))
-        return (moves, [])
+
+        aux = self.separador(self.raioLaser(p, 1, 10, team), team)
+        moves.extend(aux[0])
+        special.extend(aux[1])
+
+        aux = self.separador(self.raioLaser(p, 2, 10, team), team)
+        moves.extend(aux[0])
+        special.extend(aux[1])
+
+        aux = self.separador(self.raioLaser(p, 3, 8, team), team)
+        moves.extend(aux[0])
+        special.extend(aux[1])
+
+        aux = self.separador(self.raioLaser(p, 4, 8, team), team)
+        moves.extend(aux[0])
+        special.extend(aux[1])
+
+        return (moves, special)
 
     # Quais são os tipos de movimentos?  (nomrais :{mover, capturar},
-    # especiais: {atirar, invocar})
+    # especiais: {atirar, invocar, pular})
 
     # As posicoes são (x,y) com base no plano cartesiano, logo pra acessar a
     # posicao deve-se fazer table[y][x]
