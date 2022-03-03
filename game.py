@@ -8,7 +8,7 @@ from collections import defaultdict
 
 
 NUM_PLAYERS = 1
-nPartidas = 10
+nPartidas = 5
 
 c = threading.Condition()
 pygame.init()
@@ -120,8 +120,8 @@ for i in range(nPartidas):
             y = margin
             for row in range(11):
                 rect = pygame.Rect(x, y, tile_width, tile_height)
-                pygame.draw.rect(win, color(column+1,row+2), rect)
-                peca = iut.table[row+2][column+1]
+                pygame.draw.rect(win, color(column+1,row+1), rect)
+                peca = iut.table[row+1][column+1]
                 if peca != '_':
                     imagem = sprite[peca]
                     if sprite[peca] == None:
@@ -137,18 +137,18 @@ for i in range(nPartidas):
             pos = pygame.mouse.get_pos()
             curx = pos[0]//(tile_width+margin)
             cury = pos[1]//(tile_height+margin)
-            if color(curx+1, cury+2) == green and not iut.finished:
-                iut.move(SELECTED, (curx+1, cury+2), TEAM, 'm')
+            if color(curx+1, cury+1) == green and not iut.finished:
+                iut.move(SELECTED, (curx+1, cury+1), TEAM, 'm')
                 moves = []
-            if color(curx+1, cury+2) == yellow and not iut.finished:
-                iut.move(SELECTED, (curx+1, cury+2), TEAM, 's')
+            if color(curx+1, cury+1) == yellow and not iut.finished:
+                iut.move(SELECTED, (curx+1, cury+1), TEAM, 's')
                 moves = []
                 attack = []
             elif not iut.finished:
-                result = iut.checkMoves((curx+1,cury+2), TEAM)
+                result = iut.checkMoves((curx+1,cury+1), TEAM)
                 moves = result[0]
                 attack = result[1]
-                SELECTED = (curx+1, cury+2)
+                SELECTED = (curx+1, cury+1)
             if NUM_PLAYERS == 2:
                 TEAM = iut.CURPLAYER
         elif mouse[2] and (time.time() - debouncing) > cooldown:
@@ -156,10 +156,10 @@ for i in range(nPartidas):
             pos = pygame.mouse.get_pos()
             curx = pos[0]//(tile_width+margin)
             cury = pos[1]//(tile_height+margin)
-            result = iut.checkMoves((curx+1,cury+2), TEAM)
+            result = iut.checkMoves((curx+1,cury+1), TEAM)
             moves = []
             attack = result[1]
-            SELECTED = (curx+1, cury+2)
+            SELECTED = (curx+1, cury+1)
             if NUM_PLAYERS == 2:
                 TEAM = iut.CURPLAYER
         pygame.display.update()

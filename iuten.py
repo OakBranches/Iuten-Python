@@ -1,6 +1,6 @@
 from collections import defaultdict
-from random import randint, shuffle 
-import math
+from random import randint, shuffle
+
 class Iuten():
     def __init__(self):
         self.restart()
@@ -10,13 +10,15 @@ class Iuten():
 
         self.s = '2p1d1p1_1p1d2p1a1_1e1p1c1p1e1_1aF_F_F_F_3_1A1_1E1P1C1P1E1_1A2P1D1P1_1P1D2P'
 
-        self.TORRE1 = (5,5)
-        self.TORRE2 = (5,9)
-        self.TRONO1 = (5,2)
-        self.TRONO2 = (5,12)
+        self.TORRE1 = (5,4)
+        self.TORRE2 = (5,8)
+        self.TRONO1 = (5,1)
+        self.TRONO2 = (5,11)
         self.ELEFANTES1 = 0
         self.ELEFANTES2 = 0
         self.CURPLAYER = 0
+        self.pqtd = 8
+        self.Pqtd = 8
         self.SPECIALROUND = False
         self.finished = False
         self.types = defaultdict(int)
@@ -62,8 +64,6 @@ class Iuten():
         m = []
         l = list(11*'n')
         m.append(l)
-        l = list(11*'n')
-        m.append(l)
         l = ['n']
         idx = 0
         for i in range(len(t)//2):
@@ -80,8 +80,6 @@ class Iuten():
                     m.append(l)
                     l = ['n']
         l.extend(10*'n')
-        m.append(l)
-        l = list(11*'n')
         m.append(l)
         return m
 
@@ -242,9 +240,6 @@ class Iuten():
         else:
             return [lista, []]
         
-    
-
-
     def cavaleiro(self, p, team, bonus = False):
         moves = []
         special = []
@@ -341,10 +336,10 @@ class Iuten():
         elif self.table[self.TRONO2[1]][self.TRONO2[0]] == 'p':
             print('P chegou no trono')
             return 2
-        elif sum(list(map(lambda e: e.count('p'), self.table))) == 0:
+        elif self.pqtd == 0:
             print('todos p morreram')
             return 1
-        elif sum(list(map(lambda e: e.count('P'), self.table))) == 0:
+        elif self.Pqtd == 0:
             print('todos P morreram')
             return 2
         self.finished = False
@@ -384,12 +379,15 @@ class Iuten():
                 self.table[np[1]][np[0]] = self.table[p[1]][p[0]]
                 self.table[p[1]][p[0]] = '_'
 
-
-
             diff = abs(np[1] - p[1]) + abs(np[0] - p[0])
             # Checagem se o jogo acabou
             if oldPiece.lower() == 'p' or piece.lower() == 'p':
+                if 'p' == oldPiece:
+                    self.pqtd -= 1
+                elif 'P' == oldPiece:
+                    self.Pqtd -= 1
                 self.gameover()
+
             if oldPiece.lower() == 'e':
                 if oldPiece.isupper():
                     self.ELEFANTES1 += 1
@@ -406,6 +404,8 @@ class Iuten():
                 
         else:
             print(f'algo deu errado... {np}\n{possible[self.types[type]]}')
+        print(f'{team}: {type} {p} {np}')
+        
 
     # TODO implementar
     def process(self,comando):
@@ -430,7 +430,7 @@ class Iuten():
         esperto = False
         trono = self.TRONO1 if team == 1 else self.TRONO2
         for i in range(1,10):
-            for j in range(2,13):
+            for j in range(1,13):
                 aux = self.checkMoves((i, j), team)
                 if aux != None:
                     if len(aux[0]) > 0:
@@ -465,6 +465,7 @@ class Iuten():
             escolhido = ((escolhas[0]), escolhas[1][0], escolhas[2])
         else:
             escolhido = ((escolhas[0]), escolhas[1][self.rand(len(escolhas[1]))], escolhas[2])
+
         return escolhido
 
 
