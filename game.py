@@ -37,6 +37,7 @@ red = (255, 0, 0)
 black = (0, 0, 0)
 yellow = (245, 245, 66)
 blue = (0, 0, 255)
+cyan = (0, 255, 255)
 clock = pygame.time.Clock()
 
 cooldown = 0.1
@@ -55,6 +56,8 @@ def color(x, y):
         return green
     elif (x,y) in attack:
         return yellow
+    elif iut.lastMove!= None and (x,y) in iut.lastMove:
+        return cyan
     elif (x,y) in [iut.TORRE1,iut.TORRE2]:
         return blue
     elif (x,y) in [iut.TRONO1,iut.TRONO2]:
