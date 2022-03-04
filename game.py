@@ -8,7 +8,7 @@ from collections import defaultdict
 
 
 NUM_PLAYERS = 1
-nPartidas = 5
+nPartidas = 20
 
 c = threading.Condition()
 pygame.init()
@@ -74,11 +74,13 @@ TEAM = 1
 def sillyAI(team, stop, teste = False):
     
     if iut.CURPLAYER == team and not iut.finished:
-        move = iut.IneffectiveChoice(team, teste)
+        if teste:
+            move = iut.IneffectiveChoice(team, False)
+        else:
+            move = iut.bogoSillyIneffectiveChoice(team, True)
+
         if move != None:
-            print(iut.bogoSillyIneffectiveChoice(team, teste), move)
             iut.move(move[0],move[1],team, move[2])
-            print(iut.evaluateState(iut))
 
 class Silly_Thread(threading.Thread):
     def __init__(self, name, team, fun, teste):
@@ -100,7 +102,7 @@ class Silly_Thread(threading.Thread):
 
 
 a = Silly_Thread("IA", 0, sillyAI, True)
-b = Silly_Thread("IA_2", 1, sillyAI, True)
+b = Silly_Thread("IA_2", 1, sillyAI, False)
 if NUM_PLAYERS < 2:
     a.start()
 if NUM_PLAYERS == 0:

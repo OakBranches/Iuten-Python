@@ -473,7 +473,7 @@ class Iuten():
     def IneffectiveChoice(self, team, teste=False):
         if team != self.CURPLAYER:
             return None
-        move = self.alphabeta(self, 4, - math.inf, math.inf, time.time() + 4 ,True)
+        move = self.alphabeta(self, 3, - math.inf, math.inf, None ,True)
         l = ['m', 's']
         return (move[0],move[1],l[move[3]])
 
@@ -529,7 +529,7 @@ class Iuten():
                 if value <= alpha:
                     break #(* alpha cutoff *)
                 if oldv != value:
-                    aux = child
+                    aux = child            
             if not root:
                 return value
             else:
@@ -541,12 +541,13 @@ class Iuten():
             for i in range(1,10):
                 for j in range(1,13):
                     if node.isMy((i,j),1):
-                        soma += 0.000002 * (9-i)*(10 -self.values((i,j)))
+                        soma += 0.00002 * (13-j)
                     elif node.isMy((i,j),0):
-                        soma -=  0.000001 * i *(10 -self.values((i,j)))
+                        soma -=  0.00001 * (j +1)
             if node.Pqtd >= node.pqtd:
                 soma += 0.1
             soma += node.Pqtd * 0.04
+
             return soma
         else:
             return node.gameover() -1
