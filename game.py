@@ -74,9 +74,11 @@ TEAM = 1
 def sillyAI(team, stop, teste = False):
     
     if iut.CURPLAYER == team and not iut.finished:
-        move = iut.bogoSillyIneffectiveChoice(team, teste)
+        move = iut.IneffectiveChoice(team, teste)
         if move != None:
+            print(iut.bogoSillyIneffectiveChoice(team, teste), move)
             iut.move(move[0],move[1],team, move[2])
+            print(iut.evaluateState(iut))
 
 class Silly_Thread(threading.Thread):
     def __init__(self, name, team, fun, teste):
@@ -133,6 +135,7 @@ for i in range(nPartidas):
         if iut.finished:
             break
         if mouse[0] and (time.time() - debouncing) > cooldown:
+            print(iut.evaluateState(iut))
             debouncing = time.time()
             pos = pygame.mouse.get_pos()
             curx = pos[0]//(tile_width+margin)
@@ -152,6 +155,7 @@ for i in range(nPartidas):
             if NUM_PLAYERS == 2:
                 TEAM = iut.CURPLAYER
         elif mouse[2] and (time.time() - debouncing) > cooldown:
+            print(iut.evaluateState(iut))
             debouncing = time.time()
             pos = pygame.mouse.get_pos()
             curx = pos[0]//(tile_width+margin)

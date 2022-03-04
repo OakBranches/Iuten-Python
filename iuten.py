@@ -1,6 +1,8 @@
 from collections import defaultdict
 from random import randint, shuffle
-
+import math
+import copy
+import time
 class Iuten():
     def __init__(self):
         self.restart()
@@ -24,6 +26,7 @@ class Iuten():
         self.types = defaultdict(int)
         self.types['s'] = 1
         self.table = self.codToTable(self.s)
+        self.lastMove = None
 
     # TIME 0 = minusculas
     # TIME 1 = maiusculas
@@ -38,12 +41,15 @@ class Iuten():
         n = '0x'+n
         return int(n,16)
 
-    def tableToCod(self, t):
+    def tableToCod(self, t = None):
+        if t == None:
+            t = self.table
+
         # ultima posicao de no-op
-        op = 23
+        op = 0
         idx = 0
         result = ''
-        lastc = t[op]
+        lastc = 'n'
         pos = op
         linha = 0
         for i in range(11):
@@ -83,7 +89,9 @@ class Iuten():
         m.append(l)
         return m
 
-    def printTable(self, t, n = False):
+    def printTable(self, t = None, n = False):
+        if t == None:
+            t = self.table
         for i in t:
             for j in i:
                 if n or j != 'n':
@@ -230,7 +238,6 @@ class Iuten():
             moves.extend(self.raioLaser(p, 8, 1, team))
         return (moves, [])
 
-
     def separador(self, lista, team):
         if len(lista) > 3:
             if self.isMy(lista[-1], abs(team - 1)):
@@ -332,20 +339,20 @@ class Iuten():
         self.finished = True
         if self.table[self.TRONO1[1]][self.TRONO1[0]] == 'P':
             print('P chegou no trono')
-            return 1
-        elif self.table[self.TRONO2[1]][self.TRONO2[0]] == 'p':
-            print('P chegou no trono')
             return 2
+        elif self.table[self.TRONO2[1]][self.TRONO2[0]] == 'p':
+            print('p chegou no trono')
+            return 1
         elif self.pqtd == 0:
             print('todos p morreram')
-            return 1
+            return 2
         elif self.Pqtd == 0:
             print('todos P morreram')
-            return 2
+            return 1
         self.finished = False
         return 0
 
-    def move(self, p, np, team, type):
+    def move(self, p, np, team, type, trustable = False):
         next = 0 if self.CURPLAYER == 1 else 1
         if team != self.CURPLAYER:
             # print('Não é o seu turno')
@@ -354,15 +361,14 @@ class Iuten():
             print('O JOGO ACABOU')
             return
 
-
-        possible = self.checkMoves(p, team)
-        if np in possible[self.types[type]]:
+        # Evitar checagem se ja tiver checado
+        if not trustable:
+            possible = self.checkMoves(p, team)
+        if trustable or np in possible[self.types[type]]:
             oldPiece = self.table[np[1]][np[0]]
             piece = self.table[p[1]][p[0]]
             newpos = (np[0], np[1])
-            
-            
-            
+
             if piece.lower() == 'd' and self.types[type] == 1:
                 # Invoca elefante
                 if team == 0:
@@ -380,6 +386,7 @@ class Iuten():
                 self.table[p[1]][p[0]] = '_'
 
             diff = abs(np[1] - p[1]) + abs(np[0] - p[0])
+
             # Checagem se o jogo acabou
             if oldPiece.lower() == 'p' or piece.lower() == 'p':
                 if 'p' == oldPiece:
@@ -403,14 +410,9 @@ class Iuten():
             self.CURPLAYER = next
                 
         else:
-            print(f'algo deu errado... {np}\n{possible[self.types[type]]}')
-        print(f'{team}: {type} {p} {np}')
+            print(f'algo deu errado...{p}=>{np}\n{type}\n{possible[self.types[0]]}\n{possible[self.types[1]]}')
+        self.lastMove = (p, np, team, type)
         
-
-    # TODO implementar
-    def process(self,comando):
-        pass
-
     def rand(self,b):
         return 0 if 1 == b  else randint(0, b-1)
 
@@ -468,5 +470,83 @@ class Iuten():
 
         return escolhido
 
+    def IneffectiveChoice(self, team, teste=False):
+        if team != self.CURPLAYER:
+            return None
+        move = self.alphabeta(self, 4, - math.inf, math.inf, time.time() + 4 ,True)
+        l = ['m', 's']
+        return (move[0],move[1],l[move[3]])
 
 
+    def getState(self,i,j, move, t):
+        newState = copy.deepcopy(self) 
+        newState.move((i, j), move, self.CURPLAYER, t, True)
+        return newState
+
+    def getAllStates(self):
+            moves = []
+            for i in range(1,10):
+                for j in range(1,13):
+                    aux = self.checkMoves((i, j), self.CURPLAYER)
+                    if aux != None:
+                        moves.extend(list(map(lambda e: self.getState(i,j,e,0), aux[0])))
+                        moves.extend(list(map(lambda e: self.getState(i,j,e,1), aux[1])))
+            return moves
+
+    # depth != 0
+    def alphabeta(self, node, depth, alpha, beta, t, root = False):
+        aux = node
+        maximizingPlayer = node.CURPLAYER != 0
+        if depth == 0 or (t is not None and t <= time.time()):
+            return self.evaluateState(node)
+        elif node.finished:
+            return node.gameover() - 1
+
+        if maximizingPlayer:
+            value = - math.inf
+            children = node.getAllStates()
+            children.sort(key=self.evaluateState, reverse=True)
+            for child in children:
+                oldv = value
+                value = max(value, self.alphabeta(child, depth -1, alpha, beta, t))
+                alpha = max(alpha, value)
+                if value >= beta:
+                    break #(* beta cutoff *)
+                if oldv != value:
+                    aux = child
+            if not root:
+                return value
+            else:
+                return aux.lastMove
+        else:
+            value = math.inf
+            children = node.getAllStates()
+            children.sort(key=self.evaluateState)
+            for child in children:
+                oldv = value
+                value = min(value, self.alphabeta(child, depth -1, alpha, beta, t))
+                beta = min(beta, value)
+                if value <= alpha:
+                    break #(* alpha cutoff *)
+                if oldv != value:
+                    aux = child
+            if not root:
+                return value
+            else:
+                return aux.lastMove
+
+    def evaluateState(self, node):
+        if not node.finished:
+            soma = 0
+            for i in range(1,10):
+                for j in range(1,13):
+                    if node.isMy((i,j),1):
+                        soma += 0.000002 * (9-i)*(10 -self.values((i,j)))
+                    elif node.isMy((i,j),0):
+                        soma -=  0.000001 * i *(10 -self.values((i,j)))
+            if node.Pqtd >= node.pqtd:
+                soma += 0.1
+            soma += node.Pqtd * 0.04
+            return soma
+        else:
+            return node.gameover() -1
