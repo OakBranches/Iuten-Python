@@ -7,7 +7,7 @@ import threading
 from collections import defaultdict
 
 
-NUM_PLAYERS = 2
+NUM_PLAYERS = 1
 nPartidas = 20
 
 c = threading.Condition()

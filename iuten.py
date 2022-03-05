@@ -3,6 +3,7 @@ from random import randint, shuffle
 import math
 import copy
 import time
+import random
 class Iuten():
     def __init__(self):
         self.restart()
@@ -418,11 +419,20 @@ class Iuten():
 
     def values(self, e):
         peca = (self.table[e[1]][e[0]]).lower()
-        valores = ['c','p','d','a','e','_']
+        valores = ['c','p','a','d','e','_']
         if peca in valores:
             return valores.index(peca)
         else:
-            return 10 
+            return 10
+
+    def evalPiece(self, e):
+        peca = (self.table[e[1]][e[0]]).lower()
+        valores = ['e','d','a','p','c']
+        if peca in valores:
+            return (1+valores.index(peca))
+        else:
+            
+            return 0
 
     def bogoSillyIneffectiveChoice(self, team, teste=False):
         moves = []
@@ -473,7 +483,7 @@ class Iuten():
     def IneffectiveChoice(self, team, teste=False):
         if team != self.CURPLAYER:
             return None
-        move = self.alphabeta(self, 3, - math.inf, math.inf, None ,True)
+        move = self.alphabeta(self, 3, - math.inf, math.inf, time.time() + 5,True)
         l = ['m', 's']
         return (move[0],move[1],l[move[3]])
 
@@ -498,38 +508,47 @@ class Iuten():
         aux = node
         maximizingPlayer = node.CURPLAYER != 0
         if depth == 0 or (t is not None and t <= time.time()):
+            # print(f'{name}: {self.evaluateState(node)}')   
+            # node.printTable()        
             return self.evaluateState(node)
         elif node.finished:
+            # print(f'{name}: {node.gameover() - 1}')   
+            # node.printTable()        
             return node.gameover() - 1
-
+        
+        idx = 0
+        children = node.getAllStates()
+        random.shuffle(children)
         if maximizingPlayer:
             value = - math.inf
-            children = node.getAllStates()
-            children.sort(key=self.evaluateState, reverse=True)
             for child in children:
                 oldv = value
                 value = max(value, self.alphabeta(child, depth -1, alpha, beta, t))
+                idx += 1
                 alpha = max(alpha, value)
-                if value >= beta:
+                if alpha >= beta:
                     break #(* beta cutoff *)
                 if oldv != value:
                     aux = child
+            # print(f'{name}: {value}')   
+            # node.printTable()        
             if not root:
                 return value
             else:
                 return aux.lastMove
         else:
             value = math.inf
-            children = node.getAllStates()
-            children.sort(key=self.evaluateState)
             for child in children:
                 oldv = value
                 value = min(value, self.alphabeta(child, depth -1, alpha, beta, t))
+                idx += 1
                 beta = min(beta, value)
-                if value <= alpha:
+                if beta <= alpha:
                     break #(* alpha cutoff *)
                 if oldv != value:
-                    aux = child            
+                    aux = child
+            # print(f'{name}: {value}')   
+            # node.printTable()         
             if not root:
                 return value
             else:
@@ -540,10 +559,12 @@ class Iuten():
             soma = 0
             for i in range(1,10):
                 for j in range(1,13):
+                    pass
                     if node.isMy((i,j),1):
-                        soma += 0.00002 * (13-j)
-                    elif node.isMy((i,j),0):
-                        soma -=  0.00001 * (j +1)
+                        soma += 0.00002 * (12-j) * (self.evalPiece((i,j)))
+                    if node.isMy((i,j),0):
+                        soma -=  0.000021 * (j) * (node.evalPiece((i,j)))
+            
             if node.Pqtd >= node.pqtd:
                 soma += 0.1
             soma += node.Pqtd * 0.04
