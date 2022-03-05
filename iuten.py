@@ -404,13 +404,13 @@ class Iuten():
             # Caso especial do cavaleiro
             if piece.lower() == 'c' and self.SPECIALROUND:
                 self.SPECIALROUND = False
-            elif piece.lower() == 'c' and not self.SPECIALROUND and oldPiece != '_' and diff >= 3 and not (newpos in [self.TORRE1, self.TORRE2]):
+            elif piece.lower() == 'c' and not self.SPECIALROUND and oldPiece != '_' and type == 's' and not (newpos in [self.TORRE1, self.TORRE2]):
                 self.SPECIALROUND = True
                 next = self.CURPLAYER
             self.CURPLAYER = next
                 
         else:
-            print(f'algo deu errado...{p}=>{np}\n{type}\n{possible[self.types[0]]}\n{possible[self.types[1]]}')
+            print(f'algo deu errado...{p}=>{np}\n{type}\n{possible[self.types[type]]}')
         self.lastMove = (p, np, team, type)
         
     def rand(self,b):
