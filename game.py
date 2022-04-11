@@ -160,7 +160,7 @@ for i in range(nPartidas):
             if NUM_PLAYERS == 2:
                 TEAM = iut.CURPLAYER
         elif mouse[2] and (time.time() - debouncing) > cooldown:
-            print(iut.evaluateState(iut))
+            print(f'{iut.evaluateState(iut)} {iut.CURPLAYER}')
             debouncing = time.time()
             pos = pygame.mouse.get_pos()
             curx = pos[0]//(tile_width+margin)

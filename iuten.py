@@ -12,6 +12,7 @@ class Iuten():
         self.table = []
 
         self.s = '2p1d1p1_1p1d2p1a1_1e1p1c1p1e1_1aF_F_F_F_3_1A1_1E1P1C1P1E1_1A2P1D1P1_1P1D2P'
+        # self.s = '8_1pF_F_F_F_D_1P7_1P7_1c'
 
         self.TORRE1 = (5,4)
         self.TORRE2 = (5,8)
@@ -26,7 +27,7 @@ class Iuten():
         self.finished = False
         self.types = defaultdict(int)
         self.types['s'] = 1
-        self.table = self.codToTable(self.s)
+        self.table = self.codToTable()
         self.lastMove = None
 
     # TIME 0 = minusculas
@@ -50,7 +51,7 @@ class Iuten():
         op = 0
         idx = 0
         result = ''
-        lastc = 'n'
+        lastc = '_'
         pos = op
         linha = 0
         for i in range(11):
@@ -67,7 +68,11 @@ class Iuten():
 
         return result + self.toHex(idx)+lastc
 
-    def codToTable(self, t):
+    def codToTable(self, t = None):
+        selfUpdate = False
+        if t == None:
+            selfUpdate = True
+            t = self.s
         m = []
         l = list(11*'n')
         m.append(l)
@@ -88,6 +93,14 @@ class Iuten():
                     l = ['n']
         l.extend(10*'n')
         m.append(l)
+
+        if selfUpdate:
+            self.pqtd = 0
+            self.Pqtd = 0
+            for l in m:
+                self.pqtd += l.count('p')
+                self.Pqtd += l.count('P')
+            
         return m
 
     def printTable(self, t = None, n = False):
@@ -353,7 +366,7 @@ class Iuten():
         self.finished = False
         return 0
 
-    def move(self, p, np, team, type, trustable = False):
+    def move(self, p, np, team, movetype, trustable = False):
         next = 0 if self.CURPLAYER == 1 else 1
         if team != self.CURPLAYER:
             # print('Não é o seu turno')
@@ -365,12 +378,12 @@ class Iuten():
         # Evitar checagem se ja tiver checado
         if not trustable:
             possible = self.checkMoves(p, team)
-        if trustable or np in possible[self.types[type]]:
+        if trustable or np in possible[self.types[movetype]]:
             oldPiece = self.table[np[1]][np[0]]
             piece = self.table[p[1]][p[0]]
             newpos = (np[0], np[1])
 
-            if piece.lower() == 'd' and self.types[type] == 1:
+            if piece.lower() == 'd' and self.types[movetype] == 1:
                 # Invoca elefante
                 if team == 0:
                     self.ELEFANTES1 -= 1
@@ -378,7 +391,7 @@ class Iuten():
                 else:
                     self.ELEFANTES2 -= 1
                     self.table[np[1]][np[0]] = 'E' 
-            elif piece.lower() == 'a' and self.types[type] == 1:
+            elif piece.lower() == 'a' and self.types[movetype] == 1:
                 # Atira
                 self.table[np[1]][np[0]] = '_'
             else:
@@ -405,14 +418,14 @@ class Iuten():
             # Caso especial do cavaleiro
             if piece.lower() == 'c' and self.SPECIALROUND:
                 self.SPECIALROUND = False
-            elif piece.lower() == 'c' and not self.SPECIALROUND and oldPiece != '_' and type == 's' and not (newpos in [self.TORRE1, self.TORRE2]):
+            elif piece.lower() == 'c' and not self.SPECIALROUND and oldPiece != '_' and (movetype == 1 or movetype == 's')and not (newpos in [self.TORRE1, self.TORRE2]):
                 self.SPECIALROUND = True
                 next = self.CURPLAYER
             self.CURPLAYER = next
                 
         else:
-            print(f'algo deu errado...{p}=>{np}\n{type}\n{possible[self.types[type]]}')
-        self.lastMove = (p, np, team, type)
+            print(f'algo deu errado...{p}=>{np}\n{movetype}\n{possible[self.types[movetype]]}')
+        self.lastMove = (p, np, team, movetype)
         
     def rand(self,b):
         return 0 if 1 == b  else randint(0, b-1)
@@ -427,7 +440,7 @@ class Iuten():
 
     def evalPiece(self, e):
         peca = (self.table[e[1]][e[0]]).lower()
-        valores = ['e','d','a','p','c']
+        valores = ['e','p','d','a','c']
         if peca in valores:
             return (1+valores.index(peca))
         else:
@@ -504,15 +517,15 @@ class Iuten():
             return moves
 
     # depth != 0
-    def alphabeta(self, node, depth, alpha, beta, t, root = False):
+    def alphabeta(self, node, depth, alpha, beta, t, root = False, name=":0."):
         aux = node
         maximizingPlayer = node.CURPLAYER != 0
         if depth == 0 or (t is not None and t <= time.time()):
-            # print(f'{name}: {self.evaluateState(node)}')   
+            # print(f'{name}: {self.evaluateState(node)} {node.SPECIALROUND} {node.pqtd} {node.Pqtd} a')   
             # node.printTable()        
             return self.evaluateState(node)
         elif node.finished:
-            # print(f'{name}: {node.gameover() - 1}')   
+            # print(f'{name}: {node.gameover() - 1} {node.SPECIALROUND} {node.pqtd} {node.Pqtd} z')   
             # node.printTable()        
             return node.gameover() - 1
         
@@ -523,14 +536,15 @@ class Iuten():
             value = - math.inf
             for child in children:
                 oldv = value
-                value = max(value, self.alphabeta(child, depth -1, alpha, beta, t))
+                value = max(value, self.alphabeta(child, depth -1, alpha, beta, t, False, name+f'{idx}.'))
                 idx += 1
                 alpha = max(alpha, value)
                 if alpha >= beta:
                     break #(* beta cutoff *)
                 if oldv != value:
                     aux = child
-            # print(f'{name}: {value}')   
+            
+            # print(f'{name}: {self.evaluateState(node)} {node.SPECIALROUND} {node.pqtd} {node.Pqtd} y')  
             # node.printTable()        
             if not root:
                 return value
@@ -540,15 +554,15 @@ class Iuten():
             value = math.inf
             for child in children:
                 oldv = value
-                value = min(value, self.alphabeta(child, depth -1, alpha, beta, t))
+                value = min(value, self.alphabeta(child, depth -1, alpha, beta, t, False, name+f'{idx}.'))
                 idx += 1
                 beta = min(beta, value)
                 if beta <= alpha:
                     break #(* alpha cutoff *)
                 if oldv != value:
                     aux = child
-            # print(f'{name}: {value}')   
-            # node.printTable()         
+            # print(f'{name}: {self.evaluateState(node)} {node.SPECIALROUND} {node.pqtd} {node.Pqtd} x')  
+            # node.printTable()  
             if not root:
                 return value
             else:
@@ -556,19 +570,37 @@ class Iuten():
 
     def evaluateState(self, node):
         if not node.finished:
-            soma = 0
+            soma = 0.1
             for i in range(1,10):
                 for j in range(1,13):
                     pass
                     if node.isMy((i,j),1):
-                        soma += 0.00002 * (12-j) * (self.evalPiece((i,j)))
+                        soma += (0.00002 * (12-j) + 0.001) * (self.evalPiece((i,j)))
                     if node.isMy((i,j),0):
-                        soma -=  0.000021 * (j) * (node.evalPiece((i,j)))
-            
-            if node.Pqtd >= node.pqtd:
-                soma += 0.1
-            soma += node.Pqtd * 0.04
+                        soma -=  (0.000021 * (j) + 0.002) * (node.evalPiece((i,j)))
+
+                soma += 0.0001 * (node.Pqtd - node.pqtd)
 
             return soma
         else:
             return node.gameover() -1
+
+
+I = Iuten()
+
+table = [ 
+
+['_','_','_','_','_','_','_','_','p'],
+['_','_','_','_','_','_','_','_','_'],
+['_','_','_','_','_','_','_','_','_'],
+['_','_','_','_','_','_','_','_','_'],
+['_','_','_','_','_','_','_','_','_'],
+['_','_','_','_','_','_','_','_','_'],
+['_','_','_','_','_','_','_','_','_'],
+['_','_','_','_','_','_','_','_','_'],
+['_','_','_','_','_','_','_','_','_'],
+['_','P','_','_','_','_','_','_','_'],
+['P','_','_','_','_','_','_','_','c'],
+]
+
+print(I.tableToCod(table))
