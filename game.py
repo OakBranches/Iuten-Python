@@ -72,7 +72,7 @@ def color(x, y):
 
 run = True
 
-NUM_PLAYERS = 0
+NUM_PLAYERS = 1
 
 # VC Começa
 TEAM = 1 - iut.CURPLAYER
@@ -81,7 +81,7 @@ BOT1_RND = 0
 BOT1_DEPTH = 2
 
 BOT2_RND = 0
-BOT2_DEPTH = 1
+BOT2_DEPTH = 2
 
 
 
@@ -202,7 +202,7 @@ for i in range(nPartidas):
             
             debouncing = time.time()
             pos = pygame.mouse.get_pos()
-            curx = pos[0]//(tile_width+margin)
+            curx = pos[0]//(tile_width+margin) - 4
             cury = pos[1]//(tile_height+margin)
             if color(curx+1, cury+1) == green and not iut.finished:
                 iut.move(SELECTED, (curx+1, cury+1), TEAM, 'm')
@@ -222,7 +222,7 @@ for i in range(nPartidas):
             print(f'{iut.evaluateState(iut)} {iut.CURPLAYER}')
             debouncing = time.time()
             pos = pygame.mouse.get_pos()
-            curx = pos[0]//(tile_width+margin)
+            curx = pos[0]//(tile_width+margin) - 4
             cury = pos[1]//(tile_height+margin)
             result = iut.checkMoves((curx+1,cury+1), TEAM)
             moves = []
