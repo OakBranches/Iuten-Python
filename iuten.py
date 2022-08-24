@@ -460,17 +460,23 @@ class Iuten():
         return math.sqrt(pow(a[0]-b[0],2) + pow(a[1]-b[1],2))
 
     def evalPiece(self, e):
-        peca = (self.table[e[1]][e[0]])
-        if peca == 'p':
+        peca_lu = (self.table[e[1]][e[0]])
+        if peca_lu == 'p':
             distTrono = (2/(1+self.dist(e,self.TRONO2)))**2
             return 1 + ((2/(self.pqtd+1))**3+ distTrono) * 10
-        elif peca == 'P':
+        elif peca_lu == 'P':
             distTrono = (2/(1+self.dist(e,self.TRONO1)))**2
             return 1 + ((2/(self.Pqtd+1))**3 + distTrono) * 10
 
-        peca = peca.lower()
-        if peca == 'a' or peca == 'A':
-            return 4 + 0.5 * (2/(1+min(self.dist(e,self.TORRE1),self.dist(e,self.TORRE2))))
+        peca = peca_lu.lower()
+        if peca == 'a':
+            d = min(self.dist(e,self.TORRE1),self.dist(e,self.TORRE2))
+            if self.table[self.TORRE1[1]][self.TORRE1[0]] == peca_lu and d != 0:
+                d = self.dist(e,self.TORRE2)
+            elif self.table[self.TORRE2[1]][self.TORRE2[0]] == peca_lu and d != 0:
+                d = self.dist(e,self.TORRE1)
+
+            return 4 + 0.3 * (2/(1+d))
 
         valores = ['e','p','d','a','c']
         if peca in valores:
@@ -524,15 +530,17 @@ class Iuten():
 
         return escolhido
 
-    def IneffectiveChoice(self, team, teste=False):
+    def IneffectiveChoice(self, team, depth = 2):
         if team != self.CURPLAYER:
             return None
         Iuten.minimax = nx.Graph()
-        move = self.alphabeta(self, 2, - math.inf, math.inf, time.time() + 5,True)
+        print(depth)
+
+        move = self.alphabeta(self, depth, team, - math.inf, math.inf, time.time() + 5,True)
         # node_size=10, width=2, node_color='black'
-        nx.draw(Iuten.minimax, with_labels = True, node_color='white', font_size=5)
-        plt.draw()
-        plt.show()
+        # nx.draw(Iuten.minimax, with_labels = True, node_color='white', font_size=5)
+        # plt.draw()
+        # plt.show()
         l = ['m', 's']
         return (move[0],move[1],l[move[3]])
 
@@ -553,7 +561,8 @@ class Iuten():
             return moves
 
     # depth != 0
-    def alphabeta(self, node, depth, alpha, beta, t, root = False, name=":0."):
+    def alphabeta(self, node, depth, team, alpha, beta, t, root = False, name=":0."):
+
         if root:
             Iuten.minimax.add_node(node)
 
@@ -561,7 +570,10 @@ class Iuten():
         # print(node)
         aux = node
         maximizingPlayer = node.CURPLAYER != 0
-        if depth == 0 or (t is not None and t <= time.time()):      
+        if depth == 0:      
+            return self.evaluateState(node)
+        elif t is not None and t <= time.time():
+            print('Não deu pra terminar o minimax')
             return self.evaluateState(node)
         elif node.finished:        
             return node.gameover() - 1
@@ -570,13 +582,13 @@ class Iuten():
 
         children = node.getAllStates()
         if maximizingPlayer:
-            children.sort(key=lambda e: e.value(), reverse=False)
+            children.sort(key=lambda e: e.value(), reverse=True)
             value = - math.inf
             for child in children:
                 Iuten.minimax.add_node(child)
                 Iuten.minimax.add_edge(node, child)
                 oldv = value
-                value = max(value, self.alphabeta(child, depth -1, alpha, beta, t, False, name+f'{idx}.'))
+                value = max(value, self.alphabeta(child, depth -1, team, alpha, beta, t, False, name+f'{idx}.'))
                 idx += 1
                 alpha = max(alpha, value)
                 if alpha >= beta:
@@ -589,13 +601,13 @@ class Iuten():
             else:
                 return aux.lastMove
         else:
-            children.sort(key=lambda e: e.value(), reverse=True)
+            children.sort(key=lambda e: e.value(), reverse=False)
             value = math.inf
             for child in children:
                 Iuten.minimax.add_node(child)
                 Iuten.minimax.add_edge(node, child)
                 oldv = value
-                value = min(value, self.alphabeta(child, depth -1, alpha, beta, t, False, name+f'{idx}.'))
+                value = min(value, self.alphabeta(child, depth -1, team, alpha, beta, t, False, name+f'{idx}.'))
                 idx += 1
                 beta = min(beta, value)
                 if beta <= alpha:
@@ -614,10 +626,10 @@ class Iuten():
             for i in range(1,10):
                 for j in range(1,13):
                     if node.isMy((i,j),1):
-                        soma += ((0.00002 * (12-j) + 0.002) * (self.evalPiece((i,j))))
+                        soma += ((0.00002 * (13-j) + 0.002) * (node.evalPiece((i,j))))
                     if node.isMy((i,j),0):
                         soma -=  ((0.000021 * (j) + 0.002) * (node.evalPiece((i,j))))
-                # soma += 0.0001 * (node.Pqtd - node.pqtd)           
+
             return soma
         else:
             return node.gameover() -1

@@ -7,8 +7,8 @@ import threading
 from collections import defaultdict
 
 
-NUM_PLAYERS = 1
-nPartidas = 20
+
+nPartidas = 10
 
 c = threading.Condition()
 pygame.init()
@@ -38,7 +38,11 @@ black = (0, 0, 0)
 yellow = (245, 245, 66)
 blue = (0, 0, 255)
 cyan = (0, 255, 255)
+
 clock = pygame.time.Clock()
+moves = []
+attack = []
+myfont = pygame.font.SysFont("Comic Sans MS", 30)
 
 cooldown = 0.1
 debouncing = time.time()
@@ -64,21 +68,29 @@ def color(x, y):
         return red
     return white
 
-moves = []
-attack = []
+
 run = True
-myfont = pygame.font.SysFont("Comic Sans MS", 30)
-iut.CURPLAYER = 1
+
+NUM_PLAYERS = 0
+
+# VC Começa
 TEAM = 1 - iut.CURPLAYER
+
+BOT1_RND = 0
+BOT1_DEPTH = 2
+
+BOT2_RND = 0
+BOT2_DEPTH = 1
+
 
 
 ##############################################################
 
-def sillyAI(team, stop, rnd):
+def sillyAI(team, depth, rnd):
     coin = random()
     if iut.CURPLAYER == team and not iut.finished:
         if rnd >= coin:
-            move = iut.IneffectiveChoice(team, False)
+            move = iut.IneffectiveChoice(team, depth)
         else:
             move = iut.bogoSillyIneffectiveChoice(team, True)
         print(move, team, "random" if rnd < coin else "minimax")
@@ -87,26 +99,27 @@ def sillyAI(team, stop, rnd):
             iut.move(move[0],move[1],team, move[2])
 
 class Silly_Thread(threading.Thread):
-    def __init__(self, name, team, fun, teste):
+    def __init__(self, name, team, fun, depth, intelect):
         threading.Thread.__init__(self)
         self.name = name
         self.team = team
-        self.teste = teste
+        self.intelect = intelect
         self.fun = fun
+        self.depth = depth
         self.killed = False
 
     def run(self):
         global iut     
         while not self.killed:
-            self.fun(self.team, self.killed, self.teste)
+            self.fun(self.team, self.depth, self.intelect)
         
 
     def kill(self):
         self.killed = True
 
 
-a = Silly_Thread("IA", 1 - TEAM, sillyAI, 1)
-b = Silly_Thread("IA_2", TEAM, sillyAI, 0.75)
+a = Silly_Thread("IA", 1 - TEAM, sillyAI, BOT1_DEPTH, 1 - BOT1_RND)
+b = Silly_Thread("IA_2", TEAM, sillyAI, BOT2_DEPTH, 1 - BOT2_RND)
 
 if NUM_PLAYERS < 2:
     a.start()
