@@ -4,7 +4,12 @@ import math
 import copy
 import time
 import random
+import networkx as nx
+import matplotlib.pyplot as plt 
+
 class Iuten():
+    minimax = None
+
     def __init__(self):
         self.restart()
 
@@ -12,7 +17,8 @@ class Iuten():
         self.table = []
 
         self.s = '2p1d1p1_1p1d2p1a1_1e1p1c1p1e1_1aF_F_F_F_3_1A1_1E1P1C1P1E1_1A2P1D1P1_1P1D2P'
-        # self.s = '8_1pF_F_F_F_D_1P7_1P7_1c'
+        # self.s = '8_1PF_F_F_F_D_1p7_1p7_1C'
+        # self.s = '8_1PF_F_F_F_3_2DF_1_1p1_1D6_'
 
         self.TORRE1 = (5,4)
         self.TORRE2 = (5,8)
@@ -112,6 +118,18 @@ class Iuten():
                     print(j, end=' ')
             print()
 
+    def __str__(self) -> str:
+        s = ""
+        t = self.table
+        for i in t:
+            for j in i:
+                if j != 'n':
+                    s += f"{j} "
+            s += '\n'
+        
+        return s + str(self.value())
+
+        
     def ocupavel(self ,p, team):
         cur = self.table[p[1]][p[0]]
 
@@ -438,13 +456,26 @@ class Iuten():
         else:
             return 10
 
+    def dist(self, a, b):
+        return math.sqrt(pow(a[0]-b[0],2) + pow(a[1]-b[1],2))
+
     def evalPiece(self, e):
-        peca = (self.table[e[1]][e[0]]).lower()
+        peca = (self.table[e[1]][e[0]])
+        if peca == 'p':
+            distTrono = (2/(1+self.dist(e,self.TRONO2)))**2
+            return 1 + ((2/(self.pqtd+1))**3+ distTrono) * 10
+        elif peca == 'P':
+            distTrono = (2/(1+self.dist(e,self.TRONO1)))**2
+            return 1 + ((2/(self.Pqtd+1))**3 + distTrono) * 10
+
+        peca = peca.lower()
+        if peca == 'a' or peca == 'A':
+            return 4 + 0.5 * (2/(1+min(self.dist(e,self.TORRE1),self.dist(e,self.TORRE2))))
+
         valores = ['e','p','d','a','c']
         if peca in valores:
             return (1+valores.index(peca))
         else:
-            
             return 0
 
     def bogoSillyIneffectiveChoice(self, team, teste=False):
@@ -496,7 +527,12 @@ class Iuten():
     def IneffectiveChoice(self, team, teste=False):
         if team != self.CURPLAYER:
             return None
-        move = self.alphabeta(self, 3, - math.inf, math.inf, time.time() + 5,True)
+        Iuten.minimax = nx.Graph()
+        move = self.alphabeta(self, 2, - math.inf, math.inf, time.time() + 5,True)
+        # node_size=10, width=2, node_color='black'
+        nx.draw(Iuten.minimax, with_labels = True, node_color='white', font_size=5)
+        plt.draw()
+        plt.show()
         l = ['m', 's']
         return (move[0],move[1],l[move[3]])
 
@@ -518,23 +554,27 @@ class Iuten():
 
     # depth != 0
     def alphabeta(self, node, depth, alpha, beta, t, root = False, name=":0."):
+        if root:
+            Iuten.minimax.add_node(node)
+
+        # print(name, node.value())
+        # print(node)
         aux = node
         maximizingPlayer = node.CURPLAYER != 0
-        if depth == 0 or (t is not None and t <= time.time()):
-            # print(f'{name}: {self.evaluateState(node)} {node.SPECIALROUND} {node.pqtd} {node.Pqtd} a')   
-            # node.printTable()        
+        if depth == 0 or (t is not None and t <= time.time()):      
             return self.evaluateState(node)
-        elif node.finished:
-            # print(f'{name}: {node.gameover() - 1} {node.SPECIALROUND} {node.pqtd} {node.Pqtd} z')   
-            # node.printTable()        
+        elif node.finished:        
             return node.gameover() - 1
         
         idx = 0
+
         children = node.getAllStates()
-        random.shuffle(children)
         if maximizingPlayer:
+            children.sort(key=lambda e: e.value(), reverse=False)
             value = - math.inf
             for child in children:
+                Iuten.minimax.add_node(child)
+                Iuten.minimax.add_edge(node, child)
                 oldv = value
                 value = max(value, self.alphabeta(child, depth -1, alpha, beta, t, False, name+f'{idx}.'))
                 idx += 1
@@ -543,16 +583,17 @@ class Iuten():
                     break #(* beta cutoff *)
                 if oldv != value:
                     aux = child
-            
-            # print(f'{name}: {self.evaluateState(node)} {node.SPECIALROUND} {node.pqtd} {node.Pqtd} y')  
-            # node.printTable()        
+                
             if not root:
                 return value
             else:
                 return aux.lastMove
         else:
+            children.sort(key=lambda e: e.value(), reverse=True)
             value = math.inf
             for child in children:
+                Iuten.minimax.add_node(child)
+                Iuten.minimax.add_edge(node, child)
                 oldv = value
                 value = min(value, self.alphabeta(child, depth -1, alpha, beta, t, False, name+f'{idx}.'))
                 idx += 1
@@ -561,8 +602,7 @@ class Iuten():
                     break #(* alpha cutoff *)
                 if oldv != value:
                     aux = child
-            # print(f'{name}: {self.evaluateState(node)} {node.SPECIALROUND} {node.pqtd} {node.Pqtd} x')  
-            # node.printTable()  
+
             if not root:
                 return value
             else:
@@ -573,24 +613,24 @@ class Iuten():
             soma = 0.1
             for i in range(1,10):
                 for j in range(1,13):
-                    pass
                     if node.isMy((i,j),1):
-                        soma += (0.00002 * (12-j) + 0.001) * (self.evalPiece((i,j)))
+                        soma += ((0.00002 * (12-j) + 0.002) * (self.evalPiece((i,j))))
                     if node.isMy((i,j),0):
-                        soma -=  (0.000021 * (j) + 0.002) * (node.evalPiece((i,j)))
-
-                soma += 0.0001 * (node.Pqtd - node.pqtd)
-
+                        soma -=  ((0.000021 * (j) + 0.002) * (node.evalPiece((i,j))))
+                # soma += 0.0001 * (node.Pqtd - node.pqtd)           
             return soma
         else:
             return node.gameover() -1
 
+    def value(self):
+        a = self.evaluateState(self)
+        return a
 
 I = Iuten()
 
 table = [ 
 
-['_','_','_','_','_','_','_','_','p'],
+['_','_','_','_','_','_','_','_','P'],
 ['_','_','_','_','_','_','_','_','_'],
 ['_','_','_','_','_','_','_','_','_'],
 ['_','_','_','_','_','_','_','_','_'],
@@ -598,9 +638,9 @@ table = [
 ['_','_','_','_','_','_','_','_','_'],
 ['_','_','_','_','_','_','_','_','_'],
 ['_','_','_','_','_','_','_','_','_'],
+['D','D','_','_','_','_','_','_','_'],
 ['_','_','_','_','_','_','_','_','_'],
-['_','P','_','_','_','_','_','_','_'],
-['P','_','_','_','_','_','_','_','c'],
+['p','_','D','_','_','_','_','_','_'],
 ]
 
 print(I.tableToCod(table))

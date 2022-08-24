@@ -1,5 +1,5 @@
 
-from typing import Text
+from random import randint, random
 import pygame
 import time
 import iuten 
@@ -68,19 +68,20 @@ moves = []
 attack = []
 run = True
 myfont = pygame.font.SysFont("Comic Sans MS", 30)
-# TEAM = iut.CURPLAYER
-TEAM = 1
+iut.CURPLAYER = 1
+TEAM = 1 - iut.CURPLAYER
 
 
 ##############################################################
 
-def sillyAI(team, stop, teste = False):
-    
+def sillyAI(team, stop, rnd):
+    coin = random()
     if iut.CURPLAYER == team and not iut.finished:
-        if teste:
+        if rnd >= coin:
             move = iut.IneffectiveChoice(team, False)
         else:
             move = iut.bogoSillyIneffectiveChoice(team, True)
+        print(move, team, "random" if rnd < coin else "minimax")
 
         if move != None:
             iut.move(move[0],move[1],team, move[2])
@@ -104,8 +105,9 @@ class Silly_Thread(threading.Thread):
         self.killed = True
 
 
-a = Silly_Thread("IA", 0, sillyAI, True)
-b = Silly_Thread("IA_2", 1, sillyAI, False)
+a = Silly_Thread("IA", 1 - TEAM, sillyAI, 1)
+b = Silly_Thread("IA_2", TEAM, sillyAI, 0.75)
+
 if NUM_PLAYERS < 2:
     a.start()
 if NUM_PLAYERS == 0:

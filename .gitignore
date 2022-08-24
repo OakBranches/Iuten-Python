@@ -1,2 +1,4 @@
 __pycache__/*
 iuten.js
+venv/
+.venv/
