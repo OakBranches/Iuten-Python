@@ -35,6 +35,7 @@ class Iuten():
         self.types['s'] = 1
         self.table = self.codToTable()
         self.lastMove = None
+        self.cemiterio = []
 
     # TIME 0 = minusculas
     # TIME 1 = maiusculas
@@ -417,8 +418,6 @@ class Iuten():
                 self.table[np[1]][np[0]] = self.table[p[1]][p[0]]
                 self.table[p[1]][p[0]] = '_'
 
-            diff = abs(np[1] - p[1]) + abs(np[0] - p[0])
-
             # Checagem se o jogo acabou
             if oldPiece.lower() == 'p' or piece.lower() == 'p':
                 if 'p' == oldPiece:
@@ -432,6 +431,9 @@ class Iuten():
                     self.ELEFANTES1 += 1
                 else:
                     self.ELEFANTES2 += 1
+                    
+            if oldPiece.lower() not in ['_', 'n']:
+                self.cemiterio.append(oldPiece)
 
             # Caso especial do cavaleiro
             if piece.lower() == 'c' and self.SPECIALROUND:

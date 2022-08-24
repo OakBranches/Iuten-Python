@@ -5,7 +5,7 @@ import time
 import iuten 
 import threading
 from collections import defaultdict
-
+from copy import copy
 
 
 nPartidas = 10
@@ -30,7 +30,8 @@ sprite = defaultdict(lambda: None)
 tile_width = 30
 tile_height = 30
 margin = 8 
-win = pygame.display.set_mode(((tile_width+margin)*9, (tile_height+margin)*11))
+win = pygame.display.set_mode(((tile_width+margin)*17, (tile_height+margin)*11))
+
 white = (255, 255, 255)
 green = (0, 255, 0)
 red = (255, 0, 0)
@@ -127,6 +128,35 @@ if NUM_PLAYERS == 0:
     b.start()
 partidas = [0,0,0]
 ###############################################################
+def updateCimiterio(cemiterio):
+    rect = pygame.Rect(0, 0, 4*(tile_width + margin) , 9*(tile_height+ margin))
+    pygame.draw.rect(win, black, rect)
+    rect = pygame.Rect(13*(tile_width + margin), 0, 4*(tile_width + margin) , 9*(tile_height+ margin))
+    pygame.draw.rect(win, black, rect)
+
+    cemi_1_list = list(filter(lambda e: not e.islower(), cemiterio))
+    cemi_2_list = list(filter(lambda e: e.islower(), cemiterio))
+    cont = 0
+    x = 0
+    for i in range(len(cemi_1_list)):
+        peca = cemi_1_list[i]
+        if sprite[peca] == None:
+            sprite[peca] = sprites(peca)
+        win.blit(sprite[peca], (x +(tile_width + margin) * (cont %4), cont//4 * (tile_height + margin)))
+        cont += 1 
+
+    x = (tile_height + margin) * 13
+    cont = 0
+    for i in range(len(cemi_2_list)):
+        peca = cemi_2_list[i]
+        if sprite[peca] == None:
+            sprite[peca] = sprites(peca)
+        win.blit(sprite[peca], (x + (tile_width + margin) * (cont %4), cont//4 * (tile_height + margin)))
+        cont += 1
+
+cemiterio = []
+rowsSaved = [[],[],[],[],[],[],[],[],[],[],[]]
+lastMove = (0,0)
 quit = False
 for i in range(nPartidas):
     while run:
@@ -137,10 +167,15 @@ for i in range(nPartidas):
                 quit = True
         
 
-        x = margin
-        for column in range(9):
-            y = margin
-            for row in range(11):
+        y = margin  
+        for row in range(11):
+            x = 4*(tile_width+margin)
+            # TODO melhorar o render
+            # if str(iut.table[row+1]) != str(rowsSaved[row]) or row == lastMove[0]:
+            #     if iut.lastMove and str(lastMove) != str(iut.lastMove):
+            #         lastMove = copy(iut.lastMove)
+                # rowsSaved[row] = [*iut.table[row+1]]
+            for column in range(9):
                 rect = pygame.Rect(x, y, tile_width, tile_height)
                 pygame.draw.rect(win, color(column+1,row+1), rect)
                 peca = iut.table[row+1][column+1]
@@ -149,8 +184,17 @@ for i in range(nPartidas):
                     if sprite[peca] == None:
                         sprite[peca] = sprites(peca)
                     win.blit(sprite[peca], (x, y))
-                y = y + tile_height + margin
-            x = x + tile_width + margin
+                x += tile_width + margin
+            y += tile_height + margin
+
+
+
+        if str(cemiterio) != str(iut.cemiterio):
+            print(str(cemiterio), str(iut.cemiterio), str(cemiterio) != str(iut.cemiterio))
+            cemiterio = iut.cemiterio
+            
+            updateCimiterio(cemiterio)
+
         mouse = pygame.mouse.get_pressed()
         if iut.finished:
             break
