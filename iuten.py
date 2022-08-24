@@ -407,9 +407,11 @@ class Iuten():
                 if team == 0:
                     self.ELEFANTES1 -= 1
                     self.table[np[1]][np[0]] = 'e' 
+                    self.cemiterio.remove('e')
                 else:
                     self.ELEFANTES2 -= 1
                     self.table[np[1]][np[0]] = 'E' 
+                    self.cemiterio.remove('E')
             elif piece.lower() == 'a' and self.types[movetype] == 1:
                 # Atira
                 self.table[np[1]][np[0]] = '_'

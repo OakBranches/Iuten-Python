@@ -190,8 +190,7 @@ for i in range(nPartidas):
 
 
         if str(cemiterio) != str(iut.cemiterio):
-            print(str(cemiterio), str(iut.cemiterio), str(cemiterio) != str(iut.cemiterio))
-            cemiterio = iut.cemiterio
+            cemiterio = copy(iut.cemiterio)
             
             updateCimiterio(cemiterio)
 
@@ -199,7 +198,8 @@ for i in range(nPartidas):
         if iut.finished:
             break
         if mouse[0] and (time.time() - debouncing) > cooldown:
-            print(iut.evaluateState(iut))
+            print(iut.evaluateState(iut),iut.cemiterio, cemiterio)
+            
             debouncing = time.time()
             pos = pygame.mouse.get_pos()
             curx = pos[0]//(tile_width+margin)
