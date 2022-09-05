@@ -17,7 +17,7 @@ class Iuten():
         self.table = []
 
         self.s = '2p1d1p1_1p1d2p1a1_1e1p1c1p1e1_1aF_F_F_F_3_1A1_1E1P1C1P1E1_1A2P1D1P1_1P1D2P'
-        # self.s = '8_1PF_F_F_F_D_1p7_1p7_1C'
+        # self.s = '8_1PF_7_1AF_1e7_1cF_1_2DF_1_1p1_1D6_'
         # self.s = '8_1PF_F_F_F_3_2DF_1_1p1_1D6_'
 
         self.TORRE1 = (5,4)
@@ -190,8 +190,7 @@ class Iuten():
             curx += incx
             cury += incy
             possivel = self.ocupavel((curx, cury),team)
-            curPos = self.table[cury][curx]
-            
+            curPos : str = self.table[cury][curx]
             if not possivel or count >= tam:
                 if len(moves) > 0 and shot:
                     if curPos != 'n' and (curPos.isupper() and team == 0 or
@@ -211,6 +210,10 @@ class Iuten():
 
             count += 1
             moves.append((curx, cury))
+
+        if shot and len(moves) > 0 and self.table[moves[-1][1]][moves[-1][0]].lower() == 'e':
+            moves = []
+
         return moves
 
     def adjacente(self, p, team):
@@ -407,11 +410,11 @@ class Iuten():
                 if team == 0:
                     self.ELEFANTES1 -= 1
                     self.table[np[1]][np[0]] = 'e' 
-                    self.cemiterio.remove('e')
+                    self.cemiterio.remove('E')
                 else:
                     self.ELEFANTES2 -= 1
                     self.table[np[1]][np[0]] = 'E' 
-                    self.cemiterio.remove('E')
+                    self.cemiterio.remove('e')
             elif piece.lower() == 'a' and self.types[movetype] == 1:
                 # Atira
                 self.table[np[1]][np[0]] = '_'
@@ -482,10 +485,25 @@ class Iuten():
 
             return 4 + 0.3 * (2/(1+d))
 
+        if peca == 'e':
+            # TODO MELHORAR A AVALIAÇÃO DO ELEFANTE
+            # d = min(self.dist(e,self.TORRE1),self.dist(e,self.TORRE2))
+            # if d == 0:
+            #     return 3
+
+            # if self.table[self.TORRE1[1]][self.TORRE1[0]] == peca_lu:
+            #     d = self.dist(e,self.TORRE2)
+            # elif self.table[self.TORRE2[1]][self.TORRE2[0]] == peca_lu:
+            #     d = self.dist(e,self.TORRE1)
+            
+            return 3
+
+
         valores = ['e','p','d','a','c']
         if peca in valores:
             return (1+valores.index(peca))
         else:
+            print('--->',peca)
             return 0
 
     def bogoSillyIneffectiveChoice(self, team, teste=False):
@@ -574,6 +592,9 @@ class Iuten():
         # print(node)
         aux = node
         maximizingPlayer = node.CURPLAYER != 0
+        if node.SPECIALROUND:
+            depth += 1
+            
         if depth == 0:      
             return self.evaluateState(node)
         elif t is not None and t <= time.time():
@@ -649,10 +670,10 @@ table = [
 ['_','_','_','_','_','_','_','_','P'],
 ['_','_','_','_','_','_','_','_','_'],
 ['_','_','_','_','_','_','_','_','_'],
+['_','_','_','_','A','_','_','_','_'],
 ['_','_','_','_','_','_','_','_','_'],
-['_','_','_','_','_','_','_','_','_'],
-['_','_','_','_','_','_','_','_','_'],
-['_','_','_','_','_','_','_','_','_'],
+['_','_','e','_','_','_','_','_','_'],
+['_','c','_','_','_','_','_','_','_'],
 ['_','_','_','_','_','_','_','_','_'],
 ['D','D','_','_','_','_','_','_','_'],
 ['_','_','_','_','_','_','_','_','_'],

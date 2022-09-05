@@ -72,7 +72,7 @@ def color(x, y):
 
 run = True
 
-NUM_PLAYERS = 1
+NUM_PLAYERS = 0
 
 # VC Começa
 TEAM = 1 - iut.CURPLAYER
@@ -230,6 +230,10 @@ for i in range(nPartidas):
             SELECTED = (curx+1, cury+1)
             if NUM_PLAYERS == 2:
                 TEAM = iut.CURPLAYER
+        keys=pygame.key.get_pressed()
+        if keys:
+            if keys[pygame.K_r]:
+                iut.restart()
         pygame.display.update()
     run = True
     ganhador = iut.gameover()
